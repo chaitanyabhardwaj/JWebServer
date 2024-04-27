@@ -1,0 +1,1144 @@
+
+<!--
+	TODO :
+	Circular Progress bar for cgpa
+	Vendor prefix CSS
+-->
+
+<!DOCTYPE html><html lang="en-US" dir="ltr"><head><meta charset="utf-8" /><title>Chaitanya Bhardwaj</title><meta name="description" content="Chaitanya Bhardwaj, portfolio of a full stack developer. Indie Game developer(Unity). Virtual Reality(VR) and Augmented Reality(AR). Contact me for solo projects, collaborations or job openings or just get in touch via discord."/><meta name="author" content="Chaitanya Bhardwaj"/><base href="/" target="_self"/><meta name="referrer" content="origin-when-cross-origin"/>
+<meta property="og:title" content="Chaitanya Bhardwaj" />
+<meta property="og:description" content="Portfolio - Full Stack Software Developer" />
+<meta property="og:url" content="https://chaitanyabhardwaj.github.io/" />
+<meta name="image" property="og:image" content="https://raw.githubusercontent.com/chaitanyabhardwaj/chaitanyabhardwaj.github.io/97d5722b9e650f557a4ce7e3a84b5098bb7ac200/resources/favicon.png" />
+<!-- Chrome, Firefox OS and Opera -->
+<meta name="theme-color" content="#1d2127">
+<!-- Windows Phone -->
+<meta name="msapplication-navbutton-color" content="#1d2127">
+<!-- iOS Safari -->
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black">
+
+<link rel="icon" type="image/x-icon" href="resources/favicon.png" />
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.5.3/dist/css/bootstrap.min.css" integrity="sha384-TX8t27EcRE3e/ihU7zmQxVncDAy5uIKz4rEkgIXeMed4M0jlfIDPvg6uqKI2xXr2" crossorigin="anonymous">
+<link rel="stylesheet" type="text/css" href="./stylesheets/index.css">
+<link rel="stylesheet" type="text/css" href="./stylesheets/m_anim.css">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0" />
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+<script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+<script src="./scripts/section_manager.js"></script>
+<script>
+
+	'use strict';
+
+	function MyApp(sectionManager, animationManager) {
+		const inst = this;
+		this.sectionManager = sectionManager;
+		this.animationManager = animationManager;
+		//dom shortcuts
+		this.section1Container = $('#section-1-container');
+
+		this.contactDiscord = $('.contact-discord');
+		this.viewWorkBtn = $('#view-work');
+		this.wrapper = $('.outer-wrapper');
+		this.outerContainer = $('.outer-container');
+		this.doubleUp = $('#double-up');
+
+		this.modelAll = $('.m-model');
+		this.modelActive = false;
+		this.portfolioHover = $('.portfolio-hover');
+		this.modelCloseBtn = $('.m-model-close-btn');
+
+		this.certificate = $('.certificate-container');
+		this.certificateToggleBtn = $('.certificate-toggle-btn');
+		this.certificatesVisible = true;
+
+		this.animationManager = animationManager;
+
+		this.orbit1 = $('.orbit1');
+		this.orbit2 = $('.orbit2');
+		this.planet = $('.planet');
+		this.orbit1.addClass(this.orbit1.data('anim'));
+		this.orbit2.addClass(this.orbit2.data('anim'));
+
+		//event listeners
+		this.viewWorkBtn.click(() => {
+			sectionManager.goToSection(1);
+		});
+		this.viewWorkBtn.mouseover(() => {
+			inst.planet.removeClass('opacity-0');
+			inst.section1Container.addClass('m-bg-black');
+		});
+		this.viewWorkBtn.mouseout(() => {
+			inst.planet.addClass('opacity-0');
+			inst.section1Container.removeClass('m-bg-black');
+		});
+		this.contactDiscord.click(function(e) {
+			//copy discord text to system clipboard on click
+			let dText = $(e.currentTarget).text();
+			navigator.clipboard.writeText(dText).then(() => {
+				inst.displayDialog(`Copied! ${dText}`, 'success');
+			}, (err) => {
+				inst.displayDialog(err, 'error');
+				console.log(err);
+			});
+		});
+		this.portfolioHover.click(function(e) {
+			const modelID = $(e.currentTarget).data('model-id');
+			if(modelID < 0) return;
+			if(!inst.modelActive)
+				inst.displayModel(modelID);
+		});
+		this.modelCloseBtn.click(function() {
+			if(inst.modelActive)
+				inst.hideModel();
+		});
+		this.certificateToggleBtn.click(()=> {
+			inst.toggleCertificates();
+		});
+	};
+
+	function MAnim() {
+		this.anim = $('.m-anim');
+		this.oldWaypoint = 0;
+		//calculate all waypoints
+		this.waypoints = [];
+		this.waypointsI = 0;
+		$.each(this.anim, (i,e) => {
+			this.waypoints[i] = Math.floor($(this.anim[i]).offset().top) + 100;
+		});
+	};
+
+	MAnim.prototype.triggerAnimationWayPoints = function(newWaypoint) {
+		var e;
+		while(this.waypointsI < this.waypoints.length) {
+			if(this.waypoints[this.waypointsI] > newWaypoint)
+				break;
+			e = $(this.anim[this.waypointsI]);
+			e.removeClass('opacity-0');
+			e.removeClass('invisible');
+			e.removeClass('m-rotate-z');
+			e.addClass(e.data('anim'));
+			this.waypointsI++;
+		}
+		this.oldWaypoint = newWaypoint;
+	};
+
+	MAnim.prototype.increaseWayPoints = function(updateBy) {
+		if(isNaN(updateBy)) return;
+		this.waypoints = this.waypoints.map(e => e + updateBy);
+	}
+
+	MyApp.prototype.displayDialog = function(dialogText, dialogType) {
+		if(typeof dialogType != "string") return;
+		dialogType = dialogType.toUpperCase();
+		var dialogElement;
+		switch(dialogType) {
+			case 'SUCCESS' : dialogElement = $('.dialog-box-success'); break;
+			case 'ERROR' : dialogElement = $('.dialog-box-error'); break;
+			default : dialogElement = null;
+		}
+		if(dialogElement !== null) {
+			dialogElement.text(dialogText);
+			this.wrapper.removeClass('d-none');
+			dialogElement.removeClass('d-none');
+			setTimeout(() => {
+				this.wrapper.addClass('d-none');
+				dialogElement.addClass('d-none');
+			}, 3000);
+		}
+	};
+
+	MyApp.prototype.displayModel = function(modelID) {
+		const modelElement = $('.m-model').filter(`[data-model-id='${modelID}']`);
+		this.wrapper.removeClass('d-none');
+		modelElement.removeClass('d-none');
+		this.outerContainer.addClass('m-model-hide');
+		this.modelActive = true;
+	};
+
+	MyApp.prototype.hideModel = function() {
+		this.modelAll.addClass('d-none');
+		this.wrapper.addClass('d-none');
+		this.outerContainer.removeClass('m-model-hide');
+		this.modelActive = false;
+	};
+
+	MyApp.prototype.onControlledScroll = function(scrollY) {
+		//convert 'scrollTop' to 'scrollBottom'
+		const scrollBottom = scrollY + $(window).height();
+		//trigger animation waypoints based on scroll bottom
+		if(this.animationManager.oldWaypoint < scrollBottom)
+			this.animationManager.triggerAnimationWayPoints(scrollBottom);
+	};
+
+	MyApp.prototype.toggleCertificates = function() {
+		if(this.certificatesVisible) {
+			this.certificate.removeClass(this.certificate.data('anim'));
+			this.certificate.addClass('m-anim-zoom-out');
+			this.certificatesVisible = false;
+			this.animationManager.increaseWayPoints(-1000);
+			setTimeout(() => {
+				this.certificate.hide();
+			}, 700);
+		}
+		else {
+			this.certificate.show()
+			this.certificate.removeClass('m-anim-zoom-out');
+			this.certificate.addClass(this.certificate.data('anim'));
+			this.certificatesVisible = true;
+			this.animationManager.increaseWayPoints(1000);
+		}
+	};
+
+	MyApp.prototype.typeIt = function(container, str, speed, callback) {
+		let i = 0;
+		let str1 = '';
+		const interval = setInterval(() => {
+			str1 += str.charAt(i);
+			$(container).html(str1);
+			i++;
+			if(i == str.length) {
+				callback();
+				clearInterval(interval);
+			}
+		}, speed);
+	};
+
+	$(document).ready(() => {
+		const sm = new SectionManager('.section');
+		sm.setNavbar('.navbar-container', '.nav-item');
+		//intial call when setup ready
+		sm.init();
+		const anm = new MAnim();
+		const app = new MyApp(sm, anm);
+		sm.setOnControlledScrollCallBack(app.onControlledScroll.bind(app));
+		let typeStr0 = "<div>" +
+						"Hello, I'm <span class='m-color-accent'><b>Chaitanya Bhardwaj.</b></span>" +
+					"</div>" +
+					"<div>" +
+						"I'm a Software Developer." +
+					"</div>";
+		const typeit1 = $('.typeit-1');
+		app.typeIt('.typeit-0', typeStr0, 40, () => {
+			typeit1.removeClass('invisible');
+			typeit1.addClass(typeit1.data('anim'));
+		});
+	});
+
+</script>
+</head><body>
+	<div class="outer-wrapper d-none">
+		<div class="dialog-box dialog-box-success w-100 position-absolute p-2 m-bg-success text-center d-none text-s font-weight-bold"></div>
+		<div class="dialog-box dialog-box-error w-100 position-absolute p-2 m-bg-error text-center d-none text-s font-weight-bold"></div>
+		<!--nlyze model start-->
+		<div class="position-absolute m-model text-center container d-none" data-model-id="0">
+			<div class="m-model-close-btn float-right text-m cursor-pointer m-bg-accent px-2 text-white">
+				<i class="fa fa-close"></i>
+			</div>
+			<div class="clearfix"></div>
+			<div class="row p-5" style="background-color: rgba(255,255,255,0.3);">
+				<div class="m-col-s-0 col-md-4">
+					<div class="position-relative mx-2 mx-sm-5 mx-md-3 my-3 portfolio-card-model m-bg-primary-dark p-3">
+						<div class="w-100 h-100 portfolio-bg" style="border: 1px solid white">
+							<div class="w-100 h-50 py-2 text-white text-m">
+								Nlyze
+								<div class="text-s mx-4 my-2 py-2" style="border-top: 1px solid white;">
+									Data Analytical Website
+								</div>
+							</div>
+							<div class="w-100 h-50" style=" background-image: url(./resources/nlyze_cover.png); background-size: cover;"></div>
+						</div>
+					</div>
+				</div>
+				<div class="col-12 col-md-8 text-left pt-5 font-weight-bold">
+					<div class="text-m my-4">
+						Nlyze - Realtime Data Analytical Platform
+					</div>
+					<div class="text-s">
+						<ul>
+							<li>
+								Web and IoT based factory data analytical platform built on Google Firebase.
+							</li>
+							<li>
+								Products such as Factory Model and Real Time Collector helps in quickly finding and analysing daily or weekly or monthly losses.
+							</li>
+							<li>
+								Used in manufacturing plants to increase TMP and OEE.
+							</li>
+						</ul>
+					</div>
+					<div class="text-s">
+						<a href="https://nlyze.co" target="_blank">
+							<button type="button" class="m-btn m-btn-primary m-bg-primary px-4 py-2">
+								Website <i class="fa fa-globe"></i>
+							</button>
+						</a>
+						<a href="https://github.com/chaitanyabhardwaj/nlyze-web" target="_blank">
+							<button type="button" class="m-btn m-btn-primary m-bg-primary px-4 py-2">
+								Github <i class="fa fa-github-square"></i>
+							</button>
+						</a>
+					</div>
+				</div>
+			</div>
+		</div>
+		<!--nlyze model end-->
+		<!--teleport model start-->
+		<div class="position-absolute m-model text-center container d-none" data-model-id="2">
+			<div class="m-model-close-btn float-right text-m cursor-pointer m-bg-accent px-2 text-white">
+				<i class="fa fa-close"></i>
+			</div>
+			<div class="clearfix"></div>
+			<div class="row p-5" style="background-color: rgba(255,255,255,0.3);">
+				<div class="m-col-s-0 col-md-4">
+					<div class="position-relative mx-2 mx-sm-5 mx-md-3 my-3 portfolio-card-model m-bg-primary-dark p-3">
+						<div class="w-100 h-100 portfolio-bg" style="border: 1px solid white">
+							<div class="w-100 h-50 py-2 text-white text-m">
+								Teleport
+								<div class="text-s mx-4 my-2 py-2" style="border-top: 1px solid white;">
+									Data Transferring
+								</div>
+							</div>
+							<div class="w-100 h-50" style=" background-image: url(./resources/teleport_cover.png); background-size: cover;"></div>
+						</div>
+					</div>
+				</div>
+				<div class="col-12 col-md-8 text-left pt-5 font-weight-bold">
+					<div class="text-m my-4">
+						Teleport - Network Operation Library & Application
+					</div>
+					<div class="text-s">
+						<ul>
+							<li>
+								Data transfer over a network using TCP/IP protocol and socket programming.
+							</li>
+							<li>
+								Application built for Windows, MacOS and Android platforms.
+							</li>
+							<li>
+								Flexible enough to perform any kind of network operation by extending the library and adding just your business logic.
+							</li>
+						</ul>
+					</div>
+					<div class="text-s">
+						<a href="https://github.com/chaitanyabhardwaj/Teleport" target="_blank">
+							<button type="button" class="m-btn m-btn-primary m-bg-primary px-4 py-2">
+								Github <i class="fa fa-github-square"></i>
+							</button>
+						</a>
+					</div>
+				</div>
+			</div>
+		</div>
+		<!--teleport model end-->
+		<!--twitter sentiment model start-->
+		<div class="position-absolute m-model text-center container d-none" data-model-id="4">
+			<div class="m-model-close-btn float-right text-m cursor-pointer m-bg-accent px-2 text-white">
+				<i class="fa fa-close"></i>
+			</div>
+			<div class="clearfix"></div>
+			<div class="row p-5" style="background-color: rgba(255,255,255,0.3);">
+				<div class="m-col-s-0 col-md-4">
+					<div class="position-relative mx-2 mx-sm-5 mx-md-3 my-3 portfolio-card-model m-bg-primary-dark p-3">
+						<div class="w-100 h-100 portfolio-bg" style="border: 1px solid white">
+							<div class="w-100 h-50 py-2 text-white text-m">
+								Sentiment Analyser
+								<div class="text-s mx-4 my-2 py-2" style="border-top: 1px solid white;">
+									Twitter API
+								</div>
+							</div>
+							<div class="w-100 h-50" style=" background-image: url(./resources/twitter_sentiment_cover.png); background-size: cover;"></div>
+						</div>
+					</div>
+				</div>
+				<div class="col-12 col-md-8 text-left pt-5 font-weight-bold">
+					<div class="text-m my-4">
+						Sentiment Analyser - Determining whether a piece of writing is positive, negative or neutral
+					</div>
+					<div class="text-s">
+						<ul>
+							<li>
+								Framework for analysing sentiments of a twitter post and label it as positive, negative or neutral
+							</li>
+							<li>
+								In marketing field companies use it to develop their strategies, to understand customers’ feelings towards products or brand
+							</li>
+							<li>
+								Sentiment analysis also is used to monitor and analyse social phenomena, for the spotting of potentially dangerous situations
+							</li>
+						</ul>
+					</div>
+					<div class="text-s">
+						<a href="https://github.com/chaitanyabhardwaj/twitter_sentiment_analysis" target="_blank">
+							<button type="button" class="m-btn m-btn-primary m-bg-primary px-4 py-2">
+								Github <i class="fa fa-github-square"></i>
+							</button>
+						</a>
+					</div>
+				</div>
+			</div>
+		</div>
+		<!--twitter sentiment model end-->
+		<!--auth helper model start-->
+		<div class="position-absolute m-model text-center container d-none" data-model-id="3">
+			<div class="m-model-close-btn float-right text-m cursor-pointer m-bg-accent px-2 text-white">
+				<i class="fa fa-close"></i>
+			</div>
+			<div class="clearfix"></div>
+			<div class="row p-5" style="background-color: rgba(255,255,255,0.3);">
+				<div class="m-col-s-0 col-md-4">
+					<div class="position-relative mx-2 mx-sm-5 mx-md-3 my-3 portfolio-card-model m-bg-primary-dark p-3">
+						<div class="w-100 h-100 portfolio-bg" style="border: 1px solid white">
+							<div class="w-100 h-50 py-2 text-white text-m">
+								Tweet App
+								<div class="text-s mx-4 my-2 py-2" style="border-top: 1px solid white;">
+									A Twitter Clone
+								</div>
+							</div>
+							<div class="w-100 h-50" style=" background-image: url(./resources/tweet_app_cover.png); background-size: cover;"></div>
+						</div>
+					</div>
+				</div>
+				<div class="col-12 col-md-8 text-left pt-4 font-weight-bold">
+					<div class="text-m my-4">
+						Tweet App - React App | SpringBoot | AWS
+					</div>
+					<div class="text-s">
+						<ul>
+							<li>
+								A full stack application, featuring tweets, user login, user profile and delete and update operations
+							</li>
+							<li>
+								Created as part of GenC digital honors - A company program for being promoted to FSE.
+							</li>
+							<li>
+								The application is built using ReactJs and SpringBoot, and was hosted on AWS elasticbean stalk.
+							</li>
+							<li>
+								Technologies such as APIGateway, Load balancer, EurekaServer & Swagger are used to handle traffic and expose endpoints.
+							</li>
+						</ul>
+					</div>
+					<div class="text-s">
+						<a href="https://github.com/chaitanyabhardwaj/Tweet-App" target="_blank">
+							<button type="button" class="m-btn m-btn-primary m-bg-primary px-4 py-2">
+								Github <i class="fa fa-github-square"></i>
+							</button>
+						</a>
+					</div>
+				</div>
+			</div>
+		</div>
+		<!--auth helper model end-->
+		<!--dawn model start-->
+		<div class="position-absolute m-model text-center container d-none" data-model-id="1">
+			<div class="m-model-close-btn float-right text-m cursor-pointer m-bg-accent px-2 text-white">
+				<i class="fa fa-close"></i>
+			</div>
+			<div class="clearfix"></div>
+			<div class="row p-5" style="background-color: rgba(255,255,255,0.3);">
+				<div class="m-col-s-0 col-md-4">
+					<div class="position-relative mx-2 mx-sm-5 mx-md-3 my-3 portfolio-card-model m-bg-primary-dark p-3">
+						<div class="w-100 h-100 portfolio-bg" style="border: 1px solid white">
+							<div class="w-100 h-50 py-2 text-white text-m">
+								Dawn
+								<div class="text-s mx-4 my-2 py-2" style="border-top: 1px solid white;">
+									Virtual Scene Generator
+								</div>
+							</div>
+							<div class="w-100 h-50" style=" background-image: url(./resources/dawn_cover.png); background-size: cover;"></div>
+						</div>
+					</div>
+				</div>
+				<div class="col-12 col-md-8 text-left pt-4 font-weight-bold">
+					<div class="text-m my-4">
+						Dawn - Smart Virtual Scene Generator
+					</div>
+					<div class="text-s">
+						<ul>
+							<li>
+								Virtual 3D scene generator software built with Unity.
+							</li>
+							<li>
+								Makes smart decisions to create an authentic and realistic environment.
+							</li>
+							<li>
+								Has augmented reality feature which brings out the virtual environment into real word.
+							</li>
+							<li>
+								Built for Windows, MacOS, Android and iOS.
+							</li>
+						</ul>
+					</div>
+					<div class="text-s">
+						<a href="https://github.com/chaitanyabhardwaj/Dawn" target="_blank">
+							<button type="button" class="m-btn m-btn-primary m-bg-primary px-4 py-2">
+								Github <i class="fa fa-github-square"></i>
+							</button>
+						</a>
+					</div>
+				</div>
+			</div>
+		</div>
+		<!--dawn model end-->
+		<!--rfq model start-->
+		<div class="position-absolute m-model text-center container d-none" data-model-id="5">
+			<div class="m-model-close-btn float-right text-m cursor-pointer m-bg-accent px-2 text-white">
+				<i class="fa fa-close"></i>
+			</div>
+			<div class="clearfix"></div>
+			<div class="row p-5" style="background-color: rgba(255,255,255,0.3);">
+				<div class="m-col-s-0 col-md-4">
+					<div class="position-relative mx-2 mx-sm-5 mx-md-3 my-3 portfolio-card-model m-bg-primary-dark p-3">
+						<div class="w-100 h-100 portfolio-bg" style="border: 1px solid white">
+							<div class="w-100 h-50 py-2 text-white text-m">
+								RFQ Management
+								<div class="text-s mx-4 my-2 py-2" style="border-top: 1px solid white;">
+									Full Stack Spring Web App
+								</div>
+							</div>
+							<div class="w-100 h-50" style=" background-image: url(./resources/rfq_cover.png); background-size: cover;"></div>
+						</div>
+					</div>
+				</div>
+				<div class="col-12 col-md-8 text-left pt-4 font-weight-bold">
+					<div class="text-m my-4">
+						Spring Boot Application - Internship Project
+					</div>
+					<div class="text-s">
+						<ul>
+							<li>
+								An application to help manufactring plants lower the cost and time for machine part delivery.
+							</li>
+							<li>
+								Calculates a detailed "Request for quote"(RFQ) for the suppliers.
+							</li>
+							<li>
+								Contains features - Admin login portal, Web interface and Rest APIs for Plant module, Supplier module and RFQ Module, a load balancer and an API gateway.
+							</li>
+							<li>
+								Uses the microservice pattern. Mircoservies connected via Feign discovery.
+							</li>
+						</ul>
+					</div>
+					<div class="text-s">
+						<a href="https://github.com/chaitanyabhardwaj/RFQManagement-Spring" target="_blank">
+							<button type="button" class="m-btn m-btn-primary m-bg-primary px-4 py-2">
+								Github <i class="fa fa-github-square"></i>
+							</button>
+						</a>
+					</div>
+				</div>
+			</div>
+		</div>
+		<!--rfq model end-->
+	</div>
+	<div class="outer-container">
+		<!-- SECTION - 1 -->
+		<div class="section-container m-bg-primary-dark h-100" id ="section-1-container">
+			<section id="section-1" class="m-color-secondary text-l section position-relative h-100">
+				<div class="position-absolute w-100 d-block text-center font-weight-bold" style="top: 20%;"">
+					<div class="typeit-0">
+						<!--
+						<div>
+							Hello, I'm <span class="m-color-accent"><b>Chaitanya Bhardwaj.</b></span>
+						</div>
+						<div>
+							I'm a Software Developer.
+						</div>
+						-->
+					</div>
+					<div style="height: 100px;"></div>
+					<div class="typeit-1 invisible position-relative" data-anim="m-anim-fade-in">
+						<button type="button" class="position-relative m-btn m-btn-white m-bg-primary-dark m-color-secondary font-weight-bold text-m px-4 py-2" id="view-work">
+							View my work <i class="fa fa-long-arrow-right" id="rotating-arrow"></i>
+						</button>
+						<div class="position-absolute circle orbit orbit1" style="top: -47%; left: 45%; width: 120px; height: 120px;" data-anim="m-anim-revolve-l">
+							<div class="position-absolute circle planet opacity-0 m-bg-secondary" style="top: 10%; left: 10%; width: 12px; height: 12px;"></div>
+						</div>
+						<div class="position-absolute circle orbit orbit2" style="top: -115%; left: 42%; width: 200px; height: 200px;" data-anim="m-anim-revolve-r">
+							<div class="position-absolute circle orbit orbit1" style="top: 1%; left: 1%; width: 50px; height: 50px;">
+								<div class="position-absolute circle planet opacity-0 m-bg-secondary" style="top: 5%; left: 5%; width: 8px; height: 8px;"></div>
+								<div class="position-absolute circle planet opacity-0 m-bg-primary-d1" style="top: 25%; left: 25%; width: 20px; height: 20px;"></div>
+							</div>
+							<div class="position-absolute circle orbit orbit2" style="top: 1%; left: 1%; width: 50px; height: 50px;">
+								<div class="position-absolute circle planet opacity-0 m-bg-accent" style="bottom: -12%; right: -12%; width: 5px; height: 5px;"></div>
+							</div>
+						</div>
+					</div>
+				</div>
+			</section>
+		</div>
+		<!-- SECTION - 2 -->
+		<div class="section-container">
+			<section id="section-2" class="text-l section" style="min-height: 100%;">
+				<div id="section-2-content" class="w-100 d-block position-relative">
+					<div class="navbar-placeholder"></div>
+					<div class="navbar-container w-100">
+						<div class="navbar navbar-expand-md w-100 d-block text-s m-bg-primary-dark">
+							<button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbar1">
+								<i class="fa fa-navicon bg m-color-muted text-m"></i>
+							</button>
+							<div class="collapse navbar-collapse" id="navbar1">
+								<ul class="navbar-nav">
+									<li class="nav-item pr-4 py-1" data-section-id="0">
+										<img src="./resources/favicon.png" width="25" class="h-auto">
+									</li>
+									<li class="nav-item text-xs pr-4 py-1" data-section-id="1">
+										About
+									</li>
+									<li class="nav-item text-xs pr-4 py-1" data-section-id="2">
+										Portfolio
+									</li>
+									<li class="nav-item text-xs pr-4 py-1" data-section-id="3">
+										Academics
+									</li>
+									<li class="nav-item text-xs pr-4 py-1" data-section-id="4">
+										Publications
+									</li>
+									<li class="nav-item text-xs pr-4 py-1" data-section-id="5">
+										Contact
+									</li>
+									<li class="nav-item pr-4 py-1" data-section-id="-1">
+										<a href="./resources/ChaitanyaBhardwaj_resume.pdf" class="nav-item text-s" target="_blank" data-section-id="-1">
+											Resume <i class="fa fa-external-link text-xs"></i>
+										</a>
+									</li>
+								</ul>
+							</div>
+						</div>
+						<div class="m-bg-primary" style="height: 4px;"></div>
+					</div>
+					<div class="p-5 container-fluid">
+						<div class="text-center mb-5">
+							<div class="text-ml font-fam-2 m-color-secondary-dark d-inline-block m-anim invisible scale" data-anim="m-anim-left-entrance">
+								ABOUT
+								<div class="m-bg-secondary-dark mx-4" style="height: 5px;"></div>
+							</div>
+						</div>
+						<div class="my-5 mx-lg-5 mx-sm-3 row text-muted">
+							<div class="m-badge-container text-center col-6 col-md-3 mb-4 mb-lg-0 m-anim opacity-0" data-anim="m-anim-left-entrance">
+								<div class="m-badge m-bg-primary position-relative hover-shadow">
+									<div class="m-badge-content text-white position-absolute" style="top: 16px; left: 16px;">
+										<i class="fa fa-rocket" style="font-size: 135%;"></i>
+									</div>
+								</div>
+								<div class="text-s mt-2"><b>Optimised</b></div>
+							</div>
+							<div class="m-badge-container text-center col-6 col-md-3 mb-4 mb-lg-0 m-anim opacity-0" data-anim="m-anim-left-entrance">
+								<div class="m-badge m-bg-primary position-relative hover-shadow">
+									<div class="m-badge-content text-white position-absolute" style="top: 9px; left: 10px;">
+										<i class="fa fa-cubes" style="font-size: 125%;"></i>
+									</div>
+								</div>
+								<div class="text-s mt-2"><b>Modular</b></div>
+							</div>
+							<div class="m-badge-container text-center col-6 col-md-3 mb-4 mb-lg-0 m-anim opacity-0" data-anim="m-anim-right-entrance">
+								<div class="m-badge m-bg-primary position-relative hover-shadow">
+									<div class="m-badge-content text-white position-absolute" style="top: 11px; left: 16px;">
+										<i class="fa fa-hand-o-up" style="font-size: 125%;"></i>
+									</div>
+								</div>
+								<div class="text-s mt-2"><b>Intuitive</b></div>
+							</div>
+							<div class="m-badge-container text-center col-6 col-md-3 mb-4 mb-lg-0 m-anim opacity-0" data-anim="m-anim-right-entrance">
+								<div class="m-badge m-bg-primary position-relative hover-shadow">
+									<div class="m-badge-content text-white position-absolute" style="top: 11px; left: 26px;">
+										<i class="fa fa-lightbulb-o" style="font-size: 150%;"></i>
+									</div>
+								</div>
+								<div class="text-s mt-2"><b>Innovative</b></div>
+							</div>
+						</div>
+						<div class="row">
+							<div class="col-12 col-md-6 mb-5 m-anim invisible" data-anim="m-anim-left-entrance">
+								<div class="image-container p-2 m-auto" id="dp">
+									<img src="./resources/dp_s.jpeg" alt="Profile Picture" style="width: 100%; height: auto;">
+								</div>
+								<!-- About Me -->
+								<div class="text-s text-center text-muted mt-4 px-2 px-md-5">
+									<div class="text-m font-fam-2">Who's this guy?</div>
+									Hello! I'm a full stack software developer. 
+									My passion lies in crafting efficient and effective solutions to complex problems. 
+									I also have a keen interest in machine learning and am continuously working to enhance my knowledge in this exciting field.<br>
+									So, let's <span data-section-id="5" class="m-color-atlassian nav-item" style="text-decoration: underline;">work together</span> and create something amazing!
+								</div>
+								<div class="row text-s text-center text-muted px-3 my-4">
+									<div class="col-12 mx-1 mt-3 scale">
+										<a href="https://www.hackerrank.com/chaitanyabhardw3" target="_blank" class="text-decoration-none text-s text-center text-muted">
+											<div class="m-shadow d-inline-block py-1 px-3 rounded m-bg-primary-dark">
+												<b class="font-fam-3 text-xs" style="vertical-align: middle;">HackerRank</b>
+												<img src="./resources/hackerrank_problem_solving_badge.png" alt="Gold 5 Star" style="width: 60px; height: auto;">
+											</div>
+										</a>
+									</div>
+								</div>
+							</div>
+							<div class="col-12 col-md-6 m-anim invisible" data-anim="m-anim-right-entrance">
+								<div class="text-center text-s m-color-muted mt-1">
+									<i class="text-shadow-primary">Tech Stack</i>
+									<div></div>
+									<div class="m-bg-secondary mx-5 mb-2 w-25 d-inline-block" style="height: 1px;"></div>
+								</div>
+								<div class="text-center text-xs m-color-muted mt-1 mt-xl-2">
+									<i class="text-shadow-primary">"It's all relative"</i>
+								</div>
+								<!-- HTML -->
+								<div class="row hover-shadow">
+									<div class="col-3 text-xs m-bg-primary text-white text-center font-fam-2 font-weight-bold">HTML</div>
+									<div class="col-9 p-0">
+										<div class="progress position-relative">
+											<div class="progress-bar m-bg-primary-d1" style="width: 90%;"></div>
+											<div class="position-absolute" style="right: 10px; top: 11px; font-size: 110%;">90%</div>
+										</div>
+									</div>
+								</div>
+								<!-- CSS -->
+								<div class="row mt-3 mt-xl-4 hover-shadow">
+									<div class="col-3 text-xs m-bg-primary text-white text-center font-fam-2 font-weight-bold">CSS</div>
+									<div class="col-9 p-0">
+										<div class="progress position-relative">
+											<div class="progress-bar m-bg-primary-d1" style="width: 90%;"></div>
+											<div class="position-absolute" style="right: 10px; top: 11px; font-size: 110%;">90%</div>
+										</div>
+									</div>
+								</div>
+								<!-- Java -->
+								<div class="row mt-3 mt-xl-4 hover-shadow">
+									<div class="col-3 text-xs m-bg-primary text-white text-center font-fam-2 font-weight-bold">Java</div>
+									<div class="col-9 p-0">
+										<div class="progress position-relative">
+											<div class="progress-bar m-bg-primary-d1" style="width: 80%;"></div>
+											<div class="position-absolute" style="right: 10px; top: 11px; font-size: 110%;">80%</div>
+										</div>
+									</div>
+								</div>
+								<!-- C# -->
+								<div class="row mt-3 mt-xl-4 hover-shadow">
+									<div class="col-3 text-xs m-bg-primary text-white text-center font-fam-2 font-weight-bold">C-Sharp</div>
+									<div class="col-9 p-0">
+										<div class="progress position-relative">
+											<div class="progress-bar m-bg-primary-d1" style="width: 60%;"></div>
+											<div class="position-absolute" style="right: 10px; top: 11px; font-size: 110%;">60%</div>
+										</div>
+									</div>
+								</div>
+								<!-- Javascript -->
+								<div class="row mt-3 mt-xl-4 hover-shadow">
+									<div class="col-3 text-xs m-bg-primary text-white text-center font-fam-2 font-weight-bold">JavaScript</div>
+									<div class="col-9 p-0">
+										<div class="progress position-relative">
+											<div class="progress-bar m-bg-primary-d1" style="width: 70%;"></div>
+											<div class="position-absolute" style="right: 10px; top: 11px; font-size: 110%;">70%</div>
+										</div>
+									</div>
+								</div>
+								<!-- NodeJS -->
+								<div class="row mt-3 mt-xl-4 hover-shadow">
+									<div class="col-3 text-xs m-bg-primary text-white text-center font-fam-2 font-weight-bold">NodeJS</div>
+									<div class="col-9 p-0">
+										<div class="progress position-relative">
+											<div class="progress-bar m-bg-primary-d1" style="width: 50%;"></div>
+											<div class="position-absolute" style="right: 10px; top: 11px; font-size: 110%;">50%</div>
+										</div>
+									</div>
+								</div>
+								<!-- AWS -->
+								<div class="row mt-3 mt-xl-4 hover-shadow">
+									<div class="col-3 text-xs m-bg-primary text-white text-center font-fam-2 font-weight-bold">AWS</div>
+									<div class="col-9 p-0">
+										<div class="progress position-relative">
+											<div class="progress-bar m-bg-primary-d1" style="width: 60%;"></div>
+											<div class="position-absolute" style="right: 10px; top: 11px; font-size: 110%;">60%</div>
+										</div>
+									</div>
+								</div>
+								<!-- Unity 3D -->
+								<div class="row mt-3 mt-xl-4 hover-shadow">
+									<div class="col-3 text-xs m-bg-primary text-white text-center font-fam-2 font-weight-bold">Unity 3D</div>
+									<div class="col-9 p-0">
+										<div class="progress position-relative">
+											<div class="progress-bar m-bg-primary-d1" style="width: 60%;"></div>
+											<div class="position-absolute" style="right: 10px; top: 11px; font-size: 110%;">60%</div>
+										</div>
+									</div>
+								</div>
+								<!-- AR Core -->
+								<div class="row mt-3 mt-xl-4 hover-shadow">
+									<div class="col-3 text-xs m-bg-primary text-white text-center font-fam-2 font-weight-bold">AR Core</div>
+									<div class="col-9 p-0">
+										<div class="progress position-relative">
+											<div class="progress-bar m-bg-primary-d1" style="width: 70%;"></div>
+											<div class="position-absolute" style="right: 10px; top: 11px; font-size: 110%;">70%</div>
+										</div>
+									</div>
+								</div>
+								<!-- Android -->
+								<div class="row mt-3 mt-xl-4 hover-shadow">
+									<div class="col-3 text-xs m-bg-primary text-white text-center font-fam-2 font-weight-bold">Android</div>
+									<div class="col-9 p-0">
+										<div class="progress position-relative">
+											<div class="progress-bar m-bg-primary-d1" style="width: 70%;"></div>
+											<div class="position-absolute" style="right: 10px; top: 11px; font-size: 110%;">70%</div>
+										</div>
+									</div>
+								</div>
+								<div class="text-center text-xs m-color-muted mt-1">
+									<i class="text-shadow-primary">"Nothing is a hundred percent"</i>
+								</div>
+							</div>
+						</div>
+					</div>
+				</div>
+			</section>
+		</div>
+		<!-- SECTION - 3 -->
+		<div class="section-container m-bg-muted-light padding-100-x" style="box-shadow: 0px 1px 15px 0px #AAA inset;">
+			<section id="section-3" class="section" style="min-height: 100%;">
+				<div class="p-5 container-fluid">
+					<div class="text-center mt-2 mb-5 m-anim invisible" data-anim="m-anim-right-entrance">
+						<div class="text-ml font-fam-2 m-color-secondary-dark d-inline-block scale">
+							PORTFOLIO
+							<div class="m-bg-secondary-dark mx-4" style="height: 5px;"></div>
+						</div>
+					</div>
+					<div class="d-flex flex-wrap flex-column flex-md-row justify-content-center text-center text-m pb-5">
+						<div class="position-relative mx-2 mx-sm-5 mx-md-3 my-3 portfolio-card m-bg-primary-dark p-3 m-anim scale" data-anim="m-anim-spin">
+							<div class="w-100 h-100 portfolio-bg m-anim opacity-0" data-anim="m-anim-card-text" style="border: 1px solid white">
+								<div class="w-100 h-50 py-2 text-white">
+									Dawn
+									<div class="text-s mx-4 my-2 py-2" style="border-top: 1px solid white;">
+										Virtual Scene Generator(AR)
+									</div>
+								</div>
+								<div class="w-100 h-50" style="background-image: url(./resources/dawn_cover.png); background-size: cover;"></div>
+							</div>
+							<div class="portfolio-hover d-inline-block align-middle font-fam-2 position-absolute w-100 cursor-pointer" data-model-id="1" style="color: rgb(225,182,102);">
+								Expand
+							</div>
+						</div>
+						<div class="position-relative mx-2 mx-sm-5 mx-md-3 my-3 portfolio-card m-bg-primary-dark p-3 m-anim scale" data-anim="m-anim-spin">
+							<div class="w-100 h-100 portfolio-bg m-anim opacity-0" data-anim="m-anim-card-text" style="border: 1px solid white">
+								<div class="w-100 h-50 py-2 text-white">
+									Tweet App
+									<div class="text-s mx-4 my-2 py-2" style="border-top: 1px solid white;">
+										A Twitter Clone
+									</div>
+								</div>
+								<div class="w-100 h-50" style="background-image: url(./resources/tweet_app_cover.png); background-size: cover;"></div>
+							</div>
+							<div class="portfolio-hover d-inline-block align-middle font-fam-2 position-absolute w-100 cursor-pointer" data-model-id="3" style="color: rgb(217,135,143);">
+								Expand
+							</div>
+						</div>
+						<div class="position-relative mx-2 mx-sm-5 mx-md-3 my-3 portfolio-card m-bg-primary-dark p-3 m-anim scale" data-anim="m-anim-spin">
+							<div class="w-100 h-100 portfolio-bg m-anim opacity-0" data-anim="m-anim-card-text" style="border: 1px solid white">
+								<div class="w-100 h-50 py-2 text-white">
+									RFQ Management
+									<div class="text-s mx-4 my-2 py-2" style="border-top: 1px solid white;">
+										Full Stack Spring Web App
+									</div>
+								</div>
+								<div class="w-100 h-50" style="background-image: url(./resources/rfq_cover.png); background-size: cover;"></div>
+							</div>
+							<div class="portfolio-hover d-inline-block align-middle font-fam-2 position-absolute w-100 cursor-pointer" data-model-id="5" style="color: rgb(88,117,182);">
+								Expand
+							</div>
+						</div>
+						<div class="position-relative mx-2 mx-sm-5 mx-md-3 my-3 portfolio-card m-bg-primary-dark p-3 m-anim scale" data-anim="m-anim-spin">
+							<div class="w-100 h-100 portfolio-bg m-anim opacity-0" data-anim="m-anim-card-text" style="border: 1px solid white">
+								<div class="w-100 h-50 py-2 text-white">
+									Nlyze
+									<div class="text-s mx-4 my-2 py-2" style="border-top: 1px solid white;">
+										Data Analytical Website
+									</div>
+								</div>
+								<div class="w-100 h-50" style="background-image: url(./resources/nlyze_cover.png); background-size: cover;"></div>
+							</div>
+							<div class="portfolio-hover d-inline-block align-middle font-fam-2 position-absolute w-100 cursor-pointer" data-model-id="0" style="color: rgb(243,134,111);">
+								Expand
+							</div>
+						</div>
+						<div class="position-relative mx-2 mx-sm-5 mx-md-3 my-3 portfolio-card m-bg-primary-dark p-3 m-anim scale" data-anim="m-anim-spin">
+							<div class="w-100 h-100 portfolio-bg m-anim opacity-0" data-anim="m-anim-card-text" style="border: 1px solid white">
+								<div class="w-100 h-50 py-2 text-white">
+									Teleport
+									<div class="text-s mx-4 my-2 py-2" style="border-top: 1px solid white;">
+										Wireless Data Transferring
+									</div>
+								</div>
+								<div class="w-100 h-50" style="background-image: url(./resources/teleport_cover.png); background-size: cover;"></div>
+							</div>
+							<div class="portfolio-hover d-inline-block align-middle font-fam-2 position-absolute w-100 cursor-pointer"data-model-id="2" style="color: rgb(225,182,102);">
+								Expand
+							</div>
+						</div>
+						<div class="position-relative mx-2 mx-sm-5 mx-md-3 my-3 portfolio-card m-bg-primary-dark p-3 m-anim scale" data-anim="m-anim-spin">
+							<div class="w-100 h-100 portfolio-bg m-anim opacity-0" data-anim="m-anim-card-text" style="border: 1px solid white">
+								<div class="w-100 h-50 py-2 text-white">
+									Sentiment Analyser
+									<div class="text-s mx-4 my-2 py-2" style="border-top: 1px solid white;">
+										Twitter API
+									</div>
+								</div>
+								<div class="w-100 h-50" style="background-image: url(./resources/twitter_sentiment_cover.png); background-size: cover;"></div>
+							</div>
+							<div class="portfolio-hover d-inline-block align-middle font-fam-2 position-absolute w-100 cursor-pointer" data-model-id="4" style="color: rgb(147,184,185);">
+								Expand
+							</div>
+						</div>
+					</div>
+					<div class="text-center text-xs m-color-primary-dark mt-1">
+						<i class="text-shadow-primary">"Whatever you are, be a good one"<br>- Abraham Lincoln</i>
+					</div>
+				</div>
+			</section>
+		</div>
+		<!-- SECTION - 4 -->
+		<div class="section-container m-bg-white padding-100-x">
+			<section id="section-4" class="section" style="min-height: 100%;">
+				<div class="px-1 py-5 p-md-5 container container-fluid">
+					<div class="text-center mt-2 mb-2 m-anim invisible" data-anim="m-anim-left-entrance">
+						<div class="text-ml font-fam-2 m-color-secondary-dark d-inline-block scale">
+							ACADEMICS
+							<div class="m-bg-secondary-dark mx-4" style="height: 5px;"></div>
+						</div>
+					</div>
+					<div class="mx-0 mx-md-5 padding-100 text-s m-anim opacity-0" data-anim="m-anim-zoom-in">
+						<!-- Graduation -->
+						<div class="education-container card cursor-pointer">
+							<div class="card-header px-5">
+								<div class="text-m m-color-primary font-fam-2">Graduation</div>
+							</div>
+							<div class="card-body px-5">
+								<div>
+									<i class="fa fa-graduation-cap"></i>
+									<b>Bachelor's Of Technology(B. Tech)</b><br>Stream - Computer Science And Engineering<br>Specialisation In Data Science
+								</div>
+								<div class="mt-3 d-inline-block">
+									<i class="fa fa-university"></i>
+									<b>Graphic Era University</b><br>Passing Year - 2021
+								</div>
+								<div class="float-right d-inline-block">
+									7.7 CGPA
+								</div>
+								<div class="clearfix"></div>
+							</div>
+						</div>
+					</div>
+					<!-- Certificates -->
+					<div class="mx-auto mt-5 mb-4 text-m m-bg-primary text-center font-fam-2 text-white certificate-toggle-btn cursor-pointer" style="width: 200px; box-shadow: 0px 5px 10px 0px #777 inset;">Certificates</div>
+					<div class="d-flex justify-content-center flex-wrap mx-md-5">
+						<div class="certificate-container mx-2 mb-2 m-anim invisible" data-anim="m-anim-zoom-in">
+							<a href="https://www.youracclaim.com/badges/5eac4626-0221-4697-91d9-c1e84bc975c6/" target="_blank" class="image-container text-decoration-none text-muted">
+								<div class="certificate-badge">
+									<!--header-->
+									<div class="d-inline-block text-center">
+										<i class="fa fa-building-o"></i><br>
+										<span style="font-family: Futura;" class="text-xs">CISCO</span>
+									</div>
+									<div class="d-inline-block float-right">Networking<br>Academy</div>
+									<div class="clearfix"></div>
+									<!--body-->
+									<div class="p-1 mt-2" style="height: 100px; border-top: 1px solid #777;">
+										<div class="text-center">
+											<i class="fa fa-certificate m-color-cisco-light"></i><br>
+											<b style="font-size: 75%;">Introduction To Cyber Security</b>
+										</div>
+									</div>
+								</div>
+							</a>
+						</div>
+						<div class="certificate-container mx-2 mb-2 m-anim invisible" data-anim="m-anim-zoom-in">
+							<a href="https://www.coursera.org/account/accomplishments/verify/K5D6UGQN5XHR" target="_blank" class="image-container text-decoration-none text-muted">
+								<div class="certificate-badge">
+									<!--header-->
+									<div class="d-inline-block text-center">
+										<i class="fa fa-building-o"></i><br>
+										<span style="font-family: Futura;" class="text-xs">GOOGLE</span>
+									</div>
+									<div class="d-inline-block float-right">Daydream</div>
+									<div class="clearfix"></div>
+									<!--body-->
+									<div class="p-1 mt-2" style="height: 100px; border-top: 1px solid #777;">
+										<div class="text-center">
+											<i class="fa fa-certificate m-color-google-light"></i><br>
+											<b style="font-size: 75%;">Introduction To Augmented Reality And ARCore</b>
+										</div>
+									</div>
+								</div>
+							</a>
+						</div>
+						<div class="certificate-container mx-2 mb-2 m-anim invisible" data-anim="m-anim-zoom-in">
+							<a href="https://www.udemy.com/certificate/UC-3dfe9465-bfed-4f92-8955-9408760164bd/" target="_blank" class="image-container text-decoration-none text-muted">
+								<div class="certificate-badge">
+									<!--header-->
+									<div class="d-inline-block text-center">
+										<i class="fa fa-building-o"></i><br>
+										<span style="font-family: Futura;" class="text-xs">UDEMY</span>
+									</div>
+									<div class="d-inline-block float-right">#BeAble</div>
+									<div class="clearfix"></div>
+									<!--body-->
+									<div class="p-1 mt-2" style="height: 100px; border-top: 1px solid #777;">
+										<div class="text-center">
+											<i class="fa fa-certificate m-color-udemy-light-1"></i><br>
+											<b style="font-size: 75%;">Machine Learning Python &amp; R</b>
+										</div>
+									</div>
+								</div>
+							</a>
+						</div>
+						<div class="certificate-container mx-2 mb-2 m-anim invisible" data-anim="m-anim-zoom-in">
+							<a href="https://www.udemy.com/certificate/UC-71227db1-f194-43b3-b169-3c1fdeab894e/" target="_blank" class="image-container text-decoration-none text-muted">
+								<div class="certificate-badge">
+									<!--header-->
+									<div class="d-inline-block text-center">
+										<i class="fa fa-building-o"></i><br>
+										<span style="font-family: Futura;" class="text-xs">UDEMY</span>
+									</div>
+									<div class="d-inline-block float-right">#BeAble</div>
+									<div class="clearfix"></div>
+									<!--body-->
+									<div class="p-1 mt-2" style="height: 100px; border-top: 1px solid #777;">
+										<div class="text-center">
+											<i class="fa fa-certificate m-color-udemy-light-2"></i><br>
+											<b style="font-size: 75%;">Spring Framework 5</b>
+										</div>
+									</div>
+								</div>
+							</a>
+						</div>
+						<div class="certificate-container mx-2 mb-2 m-anim invisible" data-anim="m-anim-zoom-in">
+							<a href="https://www.coursera.org/account/accomplishments/verify/JGS7E9YF6ZTE" target="_blank" class="image-container text-decoration-none text-muted">
+								<div class="certificate-badge">
+									<!--header-->
+									<div class="d-inline-block text-center">
+										<i class="fa fa-building-o"></i><br>
+										<span style="font-family: Futura;" class="text-xs">ATLASSIAN</span>
+									</div>
+									<div class="d-inline-block float-right">University</div>
+									<div class="clearfix"></div>
+									<!--body-->
+									<div class="p-1 mt-2" style="height: 100px; border-top: 1px solid #777;">
+										<div class="text-center">
+											<i class="fa fa-certificate m-color-atlassian-light"></i><br>
+											<b style="font-size: 75%;">Version Control With Git</b>
+										</div>
+									</div>
+								</div>
+							</a>
+						</div>
+					</div>
+					<div class="text-center text-xs m-color-muted mt-4">
+						<i class="text-shadow-primary">"Action is the foundational key to all success"<br>- Pablo Picasso</i>
+					</div>
+				</div>
+			</section>
+		</div>
+		<!-- SECTION - 5 -->
+		<div class="section-container" style="box-shadow: 0px 0px 15px 0px #AAA inset; background-color: #fdf8ec; overflow: hidden">
+			<section id="section-5 padding-100-x" class="section" style="min-height: 100%;">
+				<div class="p-5 container-fluid">
+					<div class="text-center mt-2 mb-5 m-anim invisible" data-anim="m-anim-right-entrance">
+						<div class="text-ml font-fam-2 m-color-secondary-dark d-inline-block scale">
+							PUBLICATIONS
+							<div class="m-bg-secondary-dark mx-4" style="height: 5px;"></div>
+						</div>
+					</div>
+					<div class="d-flex flex-wrap flex-column flex-md-row py-2 justify-content-center text-center text-s">
+						<div class="position-relative mx-2 mx-sm-5 mx-md-3 my-3 portfolio-card m-bg-primary-dark p-3 m-anim scale" data-anim="m-anim-spin">
+							<div class="w-100 h-100 portfolio-bg m-anim opacity-0" data-anim="m-anim-card-text" style="border: 1px solid white">
+								<div class="w-100 h-50 py-2 text-white">
+									Robust Sports Image Classification Using InceptionV3 and Neural Networks
+								</div>
+								<div class="w-100 h-50" style=" background-image: url(./resources/blog_1.jpg); background-size: cover;"></div>
+							</div>
+							<div class="portfolio-hover d-inline-block align-middle m-color-accent position-absolute w-100 cursor-pointer" data-model-id="-1">
+								<a href="https://www.sciencedirect.com/science/article/pii/S1877050920307560" target="_blank" class="text-decoration-none d-block m-color-accent font-weight-bold font-fam-2">
+									Open <i class="fa fa-external-link font-weight-bold"></i>
+								</a>
+							</div>
+						</div>
+						<div class="position-relative mx-2 mx-sm-5 mx-md-3 my-3 portfolio-card m-bg-primary-dark p-3 m-anim scale" data-anim="m-anim-spin">
+							<div class="w-100 h-100 portfolio-bg m-anim opacity-0" data-anim="m-anim-card-text" style="border: 1px solid white">
+								<div class="w-100 h-50 py-2 text-white">
+									How to build an AI application using OpenAI's APIs
+								</div>
+								<div class="w-100 h-50" style=" background-image: url(./resources/blog_2.jpg); background-size: cover;"></div>
+							</div>
+							<div class="portfolio-hover d-inline-block align-middle m-color-accent position-absolute w-100 cursor-pointer" data-model-id="-1">
+								<a href="https://medium.com/@chaitanyabhardwaj89/how-to-build-an-ai-application-using-openai-api-under-15-minutes-9661c4a69861" target="_blank" class="text-decoration-none d-block m-color-accent font-weight-bold font-fam-2">
+									Open <i class="fa fa-external-link font-weight-bold"></i>
+								</a>
+							</div>
+						</div>
+					</div>
+					<div class="text-center text-xs m-color-muted mt-5">
+						<i class="text-shadow-primary">"It always seems impossible until it's done"<br>- Nelson Mandela</i>
+					</div>
+				</div>
+			</section>
+		</div>
+		<!-- SECTION - 6 -->
+		<div class="section-container m-bg-primary-dark-d1 position-relative">
+			<section id="section-6" class="section" style="min-height: 100%;">
+				<div class="p-5 container-fluid">
+					<div class="text-center mt-2 mb-5 m-anim invisible" data-anim="m-anim-left-entrance">
+						<div class="text-ml font-fam-2 m-color-secondary d-inline-block scale">
+							CONTACT ME
+							<div class="m-bg-white mx-4" style="height: 5px;"></div>
+						</div>
+					</div>
+					<div class="mt-5 pt-5 m-color-secondary text-s m-anim invisible" data-anim="m-anim-zoom-in">
+						<!--email-->
+						<div style="height: 35px;"></div>
+						<div class="my-4 text-center">
+							<div class="d-inline-block py-2 m-bg-primary text-center contact-title-container">Email</div>
+							<div class="d-inline-block py-2 m-bg-secondary-dark contact-info-container">
+								<a href="mailto:chaitanyabhardwaj89@icloud.com" class="m-color-secondary contact-email">chaitanyabhardwaj89@icloud.com</a>
+							</div>
+						</div>
+						<!--discord-->
+						<div class="my-4 text-center">
+							<div class="d-inline-block py-2 m-bg-primary text-center contact-title-container">Discord</div>
+							<div class="d-inline-block py-2 m-bg-secondary-dark contact-info-container contact-discord cursor-pointer">_chaitanya_</div>
+						</div>
+						<!--github-->
+						<div class="my-4 text-center">
+							<div class="d-inline-block py-2 m-bg-primary text-center contact-title-container">Github</div>
+							<div class="d-inline-block py-2 m-bg-secondary-dark contact-info-container cursor-pointer">
+								<a href="https://github.com/chaitanyabhardwaj?tab=overview" class="m-color-secondary">chaitanyabhardwaj</a>
+							</div>
+						</div>
+					</div>
+				</div>
+				<!-- Other Networks -->
+				<div style="height: 50px;"></div>
+				<div class="m-bg-primary-dark container-fluid pt-4 pb-3 position-absolute w-100" style="bottom: 0px;">
+					<div class="position-absolute m-bg-accent m-color-secondary text-center nav-item m-anim invisible" data-anim="m-anim-bounce" data-section-id="0" id="double-up">
+						<i class="fa fa-angle-double-up text-l"></i>
+					</div>
+					<div class="text-center text-l">
+						<a href="https://www.linkedin.com/in/chaitanya-bhardwaj-64657a132/" target="_blank" class="mx-2 m-color-secondary-dark hover-white">
+							<i class="fa fa-linkedin-square"></i>
+						</a>
+						<a href="https://www.facebook.com/chaitanya.bhardwaj.10" target="_blank" class="mx-2 m-color-secondary-dark hover-white">
+							<i class="fa fa-facebook-square"></i>
+						</a>
+						<a href="https://github.com/chaitanyabhardwaj" target="_blank" class="mx-2 m-color-secondary-dark hover-white">
+							<i class="fa fa-github-square"></i>
+						</a>
+						<a href="https://stackoverflow.com/users/5804813/chaitanya?tab=profile" target="_blank" class="mx-2 m-color-secondary-dark hover-white">
+							<i class="fa fa-stack-exchange"></i>
+						</a>
+					</div>
+					<div class="text-muted text-center mt-1">
+						<small>CHAITANYA BHARDWAJ <span class="m-color-accent">&copy;2020</span></small>
+					</div>
+				</div>
+			</section>
+		</div>
+	</div>
+</body></html>
