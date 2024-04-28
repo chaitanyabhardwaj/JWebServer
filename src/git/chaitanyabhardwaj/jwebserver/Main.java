@@ -1,9 +1,9 @@
-import git.chaitanyabhardwaj.jwebserver.WebServer;
+package git.chaitanyabhardwaj.jwebserver;
 
 import java.util.Scanner;
 
 public class Main {
-    public static void main(String[] args) throws InterruptedException, Exception {
+    public static void main(String[] args) {
         System.out.print("Run server on port: ");
         Scanner sc = new Scanner(System.in);
         runServer(sc.nextInt());
